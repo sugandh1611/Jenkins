@@ -1,0 +1,62 @@
+pipeline {
+    agent { node { label 'build_slave1' } }
+
+    stages {
+        stage('Clone source') {
+            
+            steps {
+                   git branch: '${git_branch}', credentialsId: (to be generated), url: '${git_url}'            }
+        }
+        
+        stage ('Compile Stage') {
+
+            steps {
+                    sh 'cd path/ && /opt/maven/bin/mvn clean install'
+            }
+        }
+        stage ('Move jar snapshot to /tmp folder'){
+            steps {
+                sh 'sshpass -p "${password}" scp path/to/target/*.jar ${remote_user}@${remote_ip}:/tmp'
+            }
+        }
+        stage ('Run redeploy.sh script in local project repo'){
+            steps {
+                sh 'sshpass -p "${password}" ssh -t ${remote_user}@${remote_ip} "touch abc"'
+            }
+        }
+    }
+}
+
+------------------------------------------------------------------------------------------------------------------------------
+
+pipeline {
+    agent { node { label '${node_name}' } }
+
+    stages {
+        stage('Clone source') {
+            
+            steps {
+                git branch: '${git_branch}', credentialsId: (to be generated), url: '${git_url}'
+            }
+        }
+        
+        stage ('Compile Stage') {
+
+            steps {
+                    sh 'cd path/ && /opt/maven/bin/mvn clean install'
+            }
+        }
+        stage ('Move jar snapshot to /tmp folder'){
+            steps {
+                sh 'scp path/to/target/*.jar ${remote_user}@${remote_ip}:/tmp'
+            }
+        }
+        stage ('Run shell command in remote server'){
+            steps {
+                sh 'ssh -t ${remote_user}@${remote_ip} "touch abc"'
+            }
+        }
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------
